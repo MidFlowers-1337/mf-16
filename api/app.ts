@@ -1,20 +1,14 @@
 import express, {
   type Request,
   type Response,
-  type NextFunction,
 } from 'express'
 import cors from 'cors'
-import path from 'path'
 import dotenv from 'dotenv'
-import { fileURLToPath } from 'url'
 import exhibitRoutes from './routes/exhibits.js'
 import institutionRoutes from './routes/institutions.js'
 import loanRoutes from './routes/loans.js'
 import riskRoutes from './routes/risks.js'
 import transportRoutes from './routes/transport.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 dotenv.config()
 
@@ -30,9 +24,9 @@ app.use('/api/loans', loanRoutes)
 app.use('/api/risks', riskRoutes)
 app.use('/api/transport', transportRoutes)
 
-app.use(
+app.get(
   '/api/health',
-  (req: Request, res: Response, next: NextFunction): void => {
+  (_req: Request, res: Response): void => {
     res.status(200).json({
       success: true,
       message: 'ok',
@@ -40,7 +34,7 @@ app.use(
   },
 )
 
-app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((error: Error, _req: Request, res: Response, _next) => {
   console.error(error)
   res.status(500).json({
     success: false,

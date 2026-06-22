@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
 const DB_PATH = path.resolve(process.cwd(), 'museum.db');
@@ -86,6 +85,37 @@ export function initDatabase() {
   `);
 
   seedDataIfEmpty();
+  syncExhibitStatus();
+}
+
+function syncExhibitStatus() {
+  const database = getDb();
+
+  database.exec(`
+    UPDATE exhibits
+    SET status = 'on_loan', updated_at = datetime('now')
+    WHERE status != 'maintenance'
+      AND id IN (
+        SELECT DISTINCT le.exhibit_id
+        FROM loan_exhibits le
+        JOIN loan_records lr ON le.loan_id = lr.id
+        WHERE lr.status IN ('pending', 'active', 'overdue')
+          AND lr.actual_return_date IS NULL
+      )
+  `);
+
+  database.exec(`
+    UPDATE exhibits
+    SET status = 'in_house', updated_at = datetime('now')
+    WHERE status NOT IN ('maintenance', 'in_house')
+      AND id NOT IN (
+        SELECT DISTINCT le.exhibit_id
+        FROM loan_exhibits le
+        JOIN loan_records lr ON le.loan_id = lr.id
+        WHERE lr.status IN ('pending', 'active', 'overdue')
+          AND lr.actual_return_date IS NULL
+      )
+  `);
 }
 
 function seedDataIfEmpty() {
@@ -99,8 +129,8 @@ function seedDataIfEmpty() {
   `);
 
   const exhibits = [
-    ['商代青铜鼎', '青铜器', 5000000, 0, 'in_house'],
-    ['清明上河图（复制品）', '书画', 800000, 1, 'in_house'],
+    ['商代青铜鼎', '青铜器', 5000000, 0, 'on_loan'],
+    ['清明上河图（复制品）', '书画', 800000, 1, 'on_loan'],
     ['宋代青瓷瓶', '陶瓷', 2500000, 1, 'on_loan'],
     ['汉代玉璧', '玉器', 1800000, 0, 'in_house'],
     ['唐三彩马', '陶瓷', 3200000, 0, 'in_house'],

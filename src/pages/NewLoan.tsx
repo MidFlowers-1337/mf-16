@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -46,13 +46,7 @@ export default function NewLoan() {
   const selectedInstitution = institutions.find(i => i.id === institutionId);
   const selectedExhibitObjs = exhibits.filter(e => selectedExhibits.includes(e.id));
 
-  useEffect(() => {
-    if (step === 4) {
-      validateRisks();
-    }
-  }, [step]);
-
-  const validateRisks = async () => {
+  const validateRisks = useCallback(async () => {
     if (!institutionId || selectedExhibits.length === 0 || !loanDate || !returnDate) return;
     setValidating(true);
     try {
@@ -73,7 +67,13 @@ export default function NewLoan() {
     } finally {
       setValidating(false);
     }
-  };
+  }, [institutionId, selectedExhibits, loanDate, returnDate, transportMethod, contactPerson, contactPhone, notes]);
+
+  useEffect(() => {
+    if (step === 4) {
+      validateRisks();
+    }
+  }, [step, validateRisks]);
 
   const canNext = () => {
     if (step === 1) return institutionId !== '';

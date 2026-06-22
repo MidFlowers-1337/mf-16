@@ -29,7 +29,7 @@ export default function Layout() {
 
   useEffect(() => {
     loadAll();
-  }, [location.pathname]);
+  }, [location.pathname, loadAll]);
 
   return (
     <div className="flex min-h-screen bg-museum-50">
